@@ -9,10 +9,12 @@
 @import UIKit;
 
 #import "ChatAppAsyncAPI.h"
+#import "MCSPeer.h"
 
 @interface ChatViewController : UIViewController
 
 @property (nonatomic, strong) Chat *chat;
 @property (nonatomic, strong) id<ChatAppAsyncAPI> chatAppAPI;
+@property (nonatomic, strong) MCSPeer *peer;
 
 @end

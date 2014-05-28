@@ -44,6 +44,7 @@
 				|| [segue.identifier isEqualToString:@"joinServerSegue"]) {
 		ChatViewController *viewController = segue.destinationViewController;
 		viewController.chatAppAPI = self.server ? self.server : self.client;
+		viewController.peer = self.server ? self.server : self.client;
 		viewController.chat = self.chat;
 	}
 }

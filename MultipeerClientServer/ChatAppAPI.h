@@ -17,22 +17,31 @@
 
 
 @interface Message : NSObject <TBase, NSCoding> {
+  NSString * __authorId;
   NSString * __text;
 
+  BOOL __authorId_isset;
   BOOL __text_isset;
 }
 
 #if TARGET_OS_IPHONE || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5)
+@property (nonatomic, retain, getter=authorId, setter=setAuthorId:) NSString * authorId;
 @property (nonatomic, retain, getter=text, setter=setText:) NSString * text;
 #endif
 
 - (id) init;
-- (id) initWithText: (NSString *) text;
+- (id) initWithAuthorId: (NSString *) authorId text: (NSString *) text;
 
 - (void) read: (id <TProtocol>) inProtocol;
 - (void) write: (id <TProtocol>) outProtocol;
 
 - (void) validate;
+
+#if !__has_feature(objc_arc)
+- (NSString *) authorId;
+- (void) setAuthorId: (NSString *) authorId;
+#endif
+- (BOOL) authorIdIsSet;
 
 #if !__has_feature(objc_arc)
 - (NSString *) text;

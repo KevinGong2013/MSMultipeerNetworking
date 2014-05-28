@@ -1,5 +1,6 @@
 struct Message {
-	1: required string text;
+	1: required string authorId;
+	2: required string text;
 }
 
 struct Chat {

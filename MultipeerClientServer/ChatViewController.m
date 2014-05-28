@@ -167,19 +167,21 @@ static void *ChatRevisionContext = &ChatRevisionContext;
 - (CGSize)sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
 	Message *message = self.chat.messages[ indexPath.row ];
-	MSMessageBubbleViewModel *viewModel = [self messageBubbleViewModelForMessageText:message.text isAuthor:YES];
+	BOOL isAuthor = [message.authorId isEqualToString:self.peer.uuid];
+	MSMessageBubbleViewModel *viewModel = [self messageBubbleViewModelForMessageText:message.text isAuthor:isAuthor];
 	return [viewModel.layoutSpec cellSize];
 }
 
 - (MSMessageBubbleViewModel *)messageBubbleViewModelAtIndexPath:(NSIndexPath *)indexPath
 {
 	Message *message = self.chat.messages[ indexPath.row ];
-	return [self messageBubbleViewModelForMessageText:message.text isAuthor:YES];
+	BOOL isAuthor = [message.authorId isEqualToString:self.peer.uuid];
+	return [self messageBubbleViewModelForMessageText:message.text isAuthor:isAuthor];
 }
 
 - (void)messageViewController:(MSMessageViewController *)messageViewController didSendMessageText:(NSString *)messageText
 {
-	Message *message = [[Message alloc] initWithText:messageText];
+	Message *message = [[Message alloc] initWithAuthorId:self.peer.uuid text:messageText];
 	[self.chatAppAPI addMessage:message withCompletion:^(int32_t revision) {
 		/**/
 	}];

@@ -28,9 +28,11 @@
   return self;
 }
 
-- (id) initWithText: (NSString *) text
+- (id) initWithAuthorId: (NSString *) authorId text: (NSString *) text
 {
   self = [super init];
+  __authorId = [authorId retain_stub];
+  __authorId_isset = YES;
   __text = [text retain_stub];
   __text_isset = YES;
   return self;
@@ -39,6 +41,11 @@
 - (id) initWithCoder: (NSCoder *) decoder
 {
   self = [super init];
+  if ([decoder containsValueForKey: @"authorId"])
+  {
+    __authorId = [[decoder decodeObjectForKey: @"authorId"] retain_stub];
+    __authorId_isset = YES;
+  }
   if ([decoder containsValueForKey: @"text"])
   {
     __text = [[decoder decodeObjectForKey: @"text"] retain_stub];
@@ -49,6 +56,10 @@
 
 - (void) encodeWithCoder: (NSCoder *) encoder
 {
+  if (__authorId_isset)
+  {
+    [encoder encodeObject: __authorId forKey: @"authorId"];
+  }
   if (__text_isset)
   {
     [encoder encodeObject: __text forKey: @"text"];
@@ -57,8 +68,30 @@
 
 - (void) dealloc
 {
+  [__authorId release_stub];
   [__text release_stub];
   [super dealloc_stub];
+}
+
+- (NSString *) authorId {
+  return [[__authorId retain_stub] autorelease_stub];
+}
+
+- (void) setAuthorId: (NSString *) authorId {
+  [authorId retain_stub];
+  [__authorId release_stub];
+  __authorId = authorId;
+  __authorId_isset = YES;
+}
+
+- (BOOL) authorIdIsSet {
+  return __authorId_isset;
+}
+
+- (void) unsetAuthorId {
+  [__authorId release_stub];
+  __authorId = nil;
+  __authorId_isset = NO;
 }
 
 - (NSString *) text {
@@ -100,6 +133,14 @@
       case 1:
         if (fieldType == TType_STRING) {
           NSString * fieldValue = [inProtocol readString];
+          [self setAuthorId: fieldValue];
+        } else { 
+          [TProtocolUtil skipType: fieldType onProtocol: inProtocol];
+        }
+        break;
+      case 2:
+        if (fieldType == TType_STRING) {
+          NSString * fieldValue = [inProtocol readString];
           [self setText: fieldValue];
         } else { 
           [TProtocolUtil skipType: fieldType onProtocol: inProtocol];
@@ -116,9 +157,16 @@
 
 - (void) write: (id <TProtocol>) outProtocol {
   [outProtocol writeStructBeginWithName: @"Message"];
+  if (__authorId_isset) {
+    if (__authorId != nil) {
+      [outProtocol writeFieldBeginWithName: @"authorId" type: TType_STRING fieldID: 1];
+      [outProtocol writeString: __authorId];
+      [outProtocol writeFieldEnd];
+    }
+  }
   if (__text_isset) {
     if (__text != nil) {
-      [outProtocol writeFieldBeginWithName: @"text" type: TType_STRING fieldID: 1];
+      [outProtocol writeFieldBeginWithName: @"text" type: TType_STRING fieldID: 2];
       [outProtocol writeString: __text];
       [outProtocol writeFieldEnd];
     }
@@ -129,6 +177,10 @@
 
 - (void) validate {
   // check for required fields
+  if (!__authorId_isset) {
+    @throw [TProtocolException exceptionWithName: @"TProtocolException"
+                               reason: @"Required field 'authorId' is not set."];
+  }
   if (!__text_isset) {
     @throw [TProtocolException exceptionWithName: @"TProtocolException"
                                reason: @"Required field 'text' is not set."];
@@ -137,7 +189,9 @@
 
 - (NSString *) description {
   NSMutableString * ms = [NSMutableString stringWithString: @"Message("];
-  [ms appendString: @"text:"];
+  [ms appendString: @"authorId:"];
+  [ms appendFormat: @"\"%@\"", __authorId];
+  [ms appendString: @",text:"];
   [ms appendFormat: @"\"%@\"", __text];
   [ms appendString: @")"];
   return [NSString stringWithString: ms];
