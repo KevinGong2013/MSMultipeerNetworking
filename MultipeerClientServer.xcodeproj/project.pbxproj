@@ -29,7 +29,6 @@
 		D868023018FE344A0035CE60 /* ServerBrowserViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D868022C18FE344A0035CE60 /* ServerBrowserViewController.m */; };
 		D868023518FE34540035CE60 /* NearbyServersDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = D868023118FE34540035CE60 /* NearbyServersDataSource.m */; };
 		D868023618FE34540035CE60 /* UILabelCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D868023418FE34540035CE60 /* UILabelCollectionViewCell.m */; };
-		D8AB8551190754A40030F19A /* ChatDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = D8AB8550190754A40030F19A /* ChatDataSource.m */; };
 		D8AB857B190D8B9E0030F19A /* ChatAppAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = D8AB8579190D8B9E0030F19A /* ChatAppAPI.m */; };
 		D8AB857C190D8B9E0030F19A /* ChatAppAPI.thrift in Resources */ = {isa = PBXBuildFile; fileRef = D8AB857A190D8B9E0030F19A /* ChatAppAPI.thrift */; };
 		D8AB8582190F69C60030F19A /* MCSStreamRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = D8AB8581190F69C60030F19A /* MCSStreamRequest.m */; };
@@ -84,8 +83,6 @@
 		D868023218FE34540035CE60 /* ServerBrowserViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ServerBrowserViewController.h; sourceTree = "<group>"; };
 		D868023318FE34540035CE60 /* UILabelCollectionViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UILabelCollectionViewCell.h; sourceTree = "<group>"; };
 		D868023418FE34540035CE60 /* UILabelCollectionViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UILabelCollectionViewCell.m; sourceTree = "<group>"; };
-		D8AB854F190754A40030F19A /* ChatDataSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChatDataSource.h; sourceTree = "<group>"; };
-		D8AB8550190754A40030F19A /* ChatDataSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ChatDataSource.m; sourceTree = "<group>"; };
 		D8AB8578190D8B9E0030F19A /* ChatAppAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChatAppAPI.h; sourceTree = "<group>"; };
 		D8AB8579190D8B9E0030F19A /* ChatAppAPI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ChatAppAPI.m; sourceTree = "<group>"; };
 		D8AB857A190D8B9E0030F19A /* ChatAppAPI.thrift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ChatAppAPI.thrift; sourceTree = "<group>"; };
@@ -254,8 +251,6 @@
 				D8B3D9F31911ECBF00368238 /* ChatApp */,
 				D86801FF18FE32C90035CE60 /* AppDelegate.h */,
 				D868020018FE32C90035CE60 /* AppDelegate.m */,
-				D8AB854F190754A40030F19A /* ChatDataSource.h */,
-				D8AB8550190754A40030F19A /* ChatDataSource.m */,
 				D868022B18FE344A0035CE60 /* NearbyServersDataSource.h */,
 				D868023118FE34540035CE60 /* NearbyServersDataSource.m */,
 			);
@@ -415,7 +410,6 @@
 				D868020718FE32C90035CE60 /* ViewController.m in Sources */,
 				D8AB8582190F69C60030F19A /* MCSStreamRequest.m in Sources */,
 				D846F4F3190391AF003792AC /* MCSPeer.m in Sources */,
-				D8AB8551190754A40030F19A /* ChatDataSource.m in Sources */,
 				D846F4F919039613003792AC /* MCSServer.m in Sources */,
 				D868020118FE32C90035CE60 /* AppDelegate.m in Sources */,
 				D868023518FE34540035CE60 /* NearbyServersDataSource.m in Sources */,

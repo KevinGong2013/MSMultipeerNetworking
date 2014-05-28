@@ -9,6 +9,8 @@
 #import "ChatViewController.h"
 #import "MSMessageViewController.h"
 
+static void *ChatRevisionContext = &ChatRevisionContext;
+
 @interface ChatViewController () <MSMessageViewControllerDelegate>
 
 @property (nonatomic, strong) MSMessageViewController *messageViewController;
@@ -22,6 +24,18 @@
 @end
 
 @implementation ChatViewController
+
+- (void)dealloc
+{
+	[self.chat removeObserver:self forKeyPath:@"revision"];
+}
+
+- (void)viewDidLoad
+{
+	[super viewDidLoad];
+
+	[self.chat addObserver:self forKeyPath:@"revision" options:NSKeyValueObservingOptionNew context:ChatRevisionContext];
+}
 
 - (void)viewWillLayoutSubviews
 {
@@ -44,6 +58,18 @@
 	}
 	else {
 		return [super prepareForSegue:segue sender:sender];
+	}
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+	if (context == ChatRevisionContext) {
+		dispatch_async(dispatch_get_main_queue(), ^{
+			[self.messageViewController reloadData];
+		});
+	}
+	else {
+		return [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
 	}
 }
 
@@ -153,7 +179,10 @@
 
 - (void)messageViewController:(MSMessageViewController *)messageViewController didSendMessageText:(NSString *)messageText
 {
-	
+	Message *message = [[Message alloc] initWithText:messageText];
+	[self.chatAppAPI addMessage:message withCompletion:^(int32_t revision) {
+		/**/
+	}];
 }
 
 @end
