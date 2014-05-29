@@ -18,6 +18,6 @@
 
 - (id)initWithServiceType:(NSString *)serviceType;
 
-- (void)createStreamToHostWithCompletion:(void(^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion;
+- (void)startStreamWithName:(NSString *)name toPeer:(MCPeerID *)peerID completion:(void(^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion;
 
 @end

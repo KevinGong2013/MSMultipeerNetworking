@@ -11,6 +11,6 @@
 
 @interface ChatAppClient : MCSClient <ChatAppAsyncAPI>
 
-- (id)initWithServiceType:(NSString *)serviceType maxConcurrentOperationCount:(NSUInteger)maxConcurrentOperationCount;
+- (id)initWithServiceType:(NSString *)serviceType maxConcurrentRequests:(NSUInteger)maxConcurrentRequests;
 
 @end

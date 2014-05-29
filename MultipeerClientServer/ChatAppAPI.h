@@ -108,6 +108,26 @@
 - (id<ChatAppAPI>) service;
 @end
 
+@protocol ChatAppServerEvents <NSObject>
+- (void) chatUpdated: (int32_t) revision;  // throws TException
+@end
+
+@interface ChatAppServerEventsClient : NSObject <ChatAppServerEvents> {
+id <TProtocol> inProtocol;
+id <TProtocol> outProtocol;
+}
+- (id) initWithProtocol: (id <TProtocol>) protocol;
+- (id) initWithInProtocol: (id <TProtocol>) inProtocol outProtocol: (id <TProtocol>) outProtocol;
+@end
+
+@interface ChatAppServerEventsProcessor : NSObject <TProcessor> {
+id <ChatAppServerEvents> mService;
+NSDictionary * mMethodMap;
+}
+- (id) initWithChatAppServerEvents: (id <ChatAppServerEvents>) service;
+- (id<ChatAppServerEvents>) service;
+@end
+
 @interface ChatAppAPIConstants : NSObject {
 }
 @end

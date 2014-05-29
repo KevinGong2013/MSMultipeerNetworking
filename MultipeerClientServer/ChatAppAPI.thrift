@@ -13,3 +13,7 @@ service ChatAppAPI {
 	i32 getChatRevision();
 	Chat getChat();
 }
+
+service ChatAppServerEvents {
+	oneway void chatUpdated(1:i32 revision);
+}

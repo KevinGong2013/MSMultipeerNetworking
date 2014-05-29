@@ -8,31 +8,45 @@
 
 #import "MCSClient.h"
 #import "MCSNearbyServer.h"
-#import "MCSStreamRequest.h"
+#import "TNSStreamTransport.h"
+#import "TBinaryProtocol.h"
 
 static void *ConnectedContext = &ConnectedContext;
 
-@interface MCSClient () <MCNearbyServiceBrowserDelegate, NSStreamDelegate>
+@protocol ThriftServiceInitProtocol <NSObject>
+
+- (id)initWithProtocol:(id<TProtocol>)protocol;
+
+@end
+
+@interface MCSClient () <MCNearbyServiceBrowserDelegate>
 
 @property (nonatomic, strong) MCNearbyServiceBrowser *browser;
 @property (nonatomic, strong) NSArray *nearbyServers;
 @property (nonatomic, strong) MCPeerID *hostPeerID;
+@property (nonatomic, assign) NSUInteger maxConcurrentRequests;
+@property (nonatomic, strong) NSMutableSet *thriftServices;
+@property (nonatomic, strong) NSMutableSet *activeThriftServices;
 @property (nonatomic, assign) BOOL connected;
 @property (nonatomic, copy) void (^onConnectBlock)(void);
-@property (nonatomic, strong) NSMutableDictionary *streamRequests;
+
+- (void)createStreams;
 
 @end
 
 @implementation MCSClient
 
-- (id)initWithServiceType:(NSString *)serviceType
+- (id)initWithServiceType:(NSString *)serviceType maxConcurrentRequests:(NSUInteger)maxConcurrentRequests
 {
 	self = [super initWithServiceType:serviceType];
 	if (self) {
+		self.maxConcurrentRequests = maxConcurrentRequests;
 		self.nearbyServers = [NSMutableArray array];
-		self.streamRequests = [NSMutableDictionary dictionary];
 		self.browser = [[MCNearbyServiceBrowser alloc] initWithPeer:self.session.myPeerID serviceType:self.serviceType];
 		self.browser.delegate = self;
+		self.thriftServices = [NSMutableSet set];
+		self.activeThriftServices = [NSMutableSet set];
+		
 		[self startBrowsingForHosts];
 
 		[self addObserver:self forKeyPath:@"connected" options:NSKeyValueObservingOptionNew context:ConnectedContext];
@@ -78,21 +92,54 @@ static void *ConnectedContext = &ConnectedContext;
 	[self.browser invitePeer:hostPeerID toSession:self.session withContext:nil timeout:20.f];
 }
 
-- (void)createStreamToHostWithCompletion:(void(^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion
+- (void)enqueueThriftService:(id)thriftService
 {
-	NSString *uuid = [[NSUUID UUID] UUIDString];
-	NSError *error = nil;
-	NSOutputStream *outputStream = [self.session startStreamWithName:uuid toPeer:self.hostPeerID error:&error];
-	if (error || !outputStream) {
-		NSLog(@"Error: %@", error.localizedDescription);
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[self.thriftServices addObject:thriftService];
+	});
+}
+
+- (void)dequeueThriftService:(void (^)(id thriftService))completion
+{
+	if (completion) {
+		dispatch_async(dispatch_get_main_queue(), ^{
+			id thriftService = self.thriftServices.anyObject;
+			if (thriftService) {
+				[self.activeThriftServices addObject:thriftService];
+				[self.thriftServices removeObject:thriftService];
+			}
+			
+			completion(thriftService);
+		});
 	}
-	else {
-		NSLog(@"Client: started stream named %@ with host %@", uuid, self.hostPeerID.displayName);
-		
-		outputStream.delegate = self;
-		[outputStream open];
-		MCSStreamRequest *request = [[MCSStreamRequest alloc] initWithOutputStream:outputStream completion:completion];
-		self.streamRequests[ uuid ] = request;
+}
+
+- (void)createStreams
+{
+	if (!self.thriftServiceClass) {
+		NSLog(@"Error: No Thrift service class.");
+	}
+	
+	for (int i = 0; i < self.maxConcurrentRequests; ++i) {
+		NSString *streamName = [NSString stringWithFormat:@"out-%@", [[NSUUID UUID] UUIDString]];
+		[self startStreamWithName:streamName toPeer:self.hostPeerID completion:^(NSInputStream *inputStream, NSOutputStream *outputStream) {
+			TNSStreamTransport *transport = [[TNSStreamTransport alloc] initWithInputStream:inputStream outputStream:outputStream];
+			TBinaryProtocol *protocol = [[TBinaryProtocol alloc] initWithTransport:transport strictRead:YES strictWrite:YES];
+			
+			id thriftService = [self.thriftServiceClass alloc];
+			if (thriftService) {
+				if ([thriftService respondsToSelector:@selector(initWithProtocol:)]) {
+					thriftService = [thriftService initWithProtocol:protocol];
+					if (!thriftService) {
+						NSLog(@"Error: Could not create thrift service for class %@", NSStringFromClass(self.thriftServiceClass));
+					}
+					else {
+						[self.thriftServices addObject:thriftService];
+					}
+				}
+			}
+			
+		}];
 	}
 }
 
@@ -120,6 +167,7 @@ static void *ConnectedContext = &ConnectedContext;
 			dispatch_async(dispatch_get_main_queue(), ^{
 				if (peerID == self.hostPeerID) {
 					self.connected = YES;
+					[self createStreams];
 				}
 			});
 		}
@@ -127,19 +175,6 @@ static void *ConnectedContext = &ConnectedContext;
 			
 		default:
 			break;
-	}
-}
-
-- (void)session:(MCSession *)session didReceiveStream:(NSInputStream *)stream withName:(NSString *)streamName fromPeer:(MCPeerID *)peerID
-{
-	if (peerID == self.hostPeerID) {
-		MCSStreamRequest *streamRequest = self.streamRequests[ streamName ];
-		if (streamRequest && streamRequest.completion) {
-			stream.delegate = self;
-			[stream open];
-			streamRequest.completion(stream, streamRequest.outputStream);
-			[self.streamRequests removeObjectForKey:streamName];
-		}
 	}
 }
 

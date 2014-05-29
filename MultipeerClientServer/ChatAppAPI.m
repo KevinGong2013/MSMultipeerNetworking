@@ -1400,3 +1400,263 @@
 
 @end
 
+@interface chatUpdated_args : NSObject <TBase, NSCoding> {
+int32_t __revision;
+
+BOOL __revision_isset;
+}
+
+#if TARGET_OS_IPHONE || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5)
+@property (nonatomic, getter=revision, setter=setRevision:) int32_t revision;
+#endif
+
+- (id) init;
+- (id) initWithRevision: (int32_t) revision;
+
+- (void) read: (id <TProtocol>) inProtocol;
+- (void) write: (id <TProtocol>) outProtocol;
+
+- (void) validate;
+
+#if !__has_feature(objc_arc)
+- (int32_t) revision;
+- (void) setRevision: (int32_t) revision;
+#endif
+- (BOOL) revisionIsSet;
+
+@end
+
+@implementation chatUpdated_args
+
+- (id) init
+{
+self = [super init];
+#if TARGET_OS_IPHONE || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5)
+#endif
+return self;
+}
+
+- (id) initWithRevision: (int32_t) revision
+{
+self = [super init];
+__revision = revision;
+__revision_isset = YES;
+return self;
+}
+
+- (id) initWithCoder: (NSCoder *) decoder
+{
+self = [super init];
+if ([decoder containsValueForKey: @"revision"])
+{
+  __revision = [decoder decodeInt32ForKey: @"revision"];
+  __revision_isset = YES;
+}
+return self;
+}
+
+- (void) encodeWithCoder: (NSCoder *) encoder
+{
+if (__revision_isset)
+{
+  [encoder encodeInt32: __revision forKey: @"revision"];
+}
+}
+
+- (void) dealloc
+{
+[super dealloc_stub];
+}
+
+- (int32_t) revision {
+return __revision;
+}
+
+- (void) setRevision: (int32_t) revision {
+__revision = revision;
+__revision_isset = YES;
+}
+
+- (BOOL) revisionIsSet {
+return __revision_isset;
+}
+
+- (void) unsetRevision {
+__revision_isset = NO;
+}
+
+- (void) read: (id <TProtocol>) inProtocol
+{
+NSString * fieldName;
+int fieldType;
+int fieldID;
+
+[inProtocol readStructBeginReturningName: NULL];
+while (true)
+{
+  [inProtocol readFieldBeginReturningName: &fieldName type: &fieldType fieldID: &fieldID];
+  if (fieldType == TType_STOP) { 
+    break;
+  }
+  switch (fieldID)
+  {
+    case 1:
+      if (fieldType == TType_I32) {
+        int32_t fieldValue = [inProtocol readI32];
+        [self setRevision: fieldValue];
+      } else { 
+        [TProtocolUtil skipType: fieldType onProtocol: inProtocol];
+      }
+      break;
+    default:
+      [TProtocolUtil skipType: fieldType onProtocol: inProtocol];
+      break;
+  }
+  [inProtocol readFieldEnd];
+}
+[inProtocol readStructEnd];
+}
+
+- (void) write: (id <TProtocol>) outProtocol {
+[outProtocol writeStructBeginWithName: @"chatUpdated_args"];
+if (__revision_isset) {
+  [outProtocol writeFieldBeginWithName: @"revision" type: TType_I32 fieldID: 1];
+  [outProtocol writeI32: __revision];
+  [outProtocol writeFieldEnd];
+}
+[outProtocol writeFieldStop];
+[outProtocol writeStructEnd];
+}
+
+- (void) validate {
+// check for required fields
+}
+
+- (NSString *) description {
+NSMutableString * ms = [NSMutableString stringWithString: @"chatUpdated_args("];
+[ms appendString: @"revision:"];
+[ms appendFormat: @"%i", __revision];
+[ms appendString: @")"];
+return [NSString stringWithString: ms];
+}
+
+@end
+
+@implementation ChatAppServerEventsClient
+- (id) initWithProtocol: (id <TProtocol>) protocol
+{
+return [self initWithInProtocol: protocol outProtocol: protocol];
+}
+
+- (id) initWithInProtocol: (id <TProtocol>) anInProtocol outProtocol: (id <TProtocol>) anOutProtocol
+{
+self = [super init];
+inProtocol = [anInProtocol retain_stub];
+outProtocol = [anOutProtocol retain_stub];
+return self;
+}
+
+- (void) dealloc
+{
+[inProtocol release_stub];
+[outProtocol release_stub];
+[super dealloc_stub];
+}
+
+- (void) send_chatUpdated: (int32_t) revision
+{
+[outProtocol writeMessageBeginWithName: @"chatUpdated" type: TMessageType_CALL sequenceID: 0];
+[outProtocol writeStructBeginWithName: @"chatUpdated_args"];
+[outProtocol writeFieldBeginWithName: @"revision" type: TType_I32 fieldID: 1];
+[outProtocol writeI32: revision];
+[outProtocol writeFieldEnd];
+[outProtocol writeFieldStop];
+[outProtocol writeStructEnd];
+[outProtocol writeMessageEnd];
+[[outProtocol transport] flush];
+}
+
+- (void) chatUpdated: (int32_t) revision
+{
+[self send_chatUpdated : revision];
+}
+
+@end
+
+@implementation ChatAppServerEventsProcessor
+
+- (id) initWithChatAppServerEvents: (id <ChatAppServerEvents>) service
+{
+self = [super init];
+if (!self) {
+  return nil;
+}
+mService = [service retain_stub];
+mMethodMap = [[NSMutableDictionary dictionary] retain_stub];
+{
+  SEL s = @selector(process_chatUpdated_withSequenceID:inProtocol:outProtocol:);
+  NSMethodSignature * sig = [self methodSignatureForSelector: s];
+  NSInvocation * invocation = [NSInvocation invocationWithMethodSignature: sig];
+  [invocation setSelector: s];
+  [invocation retainArguments];
+  [mMethodMap setValue: invocation forKey: @"chatUpdated"];
+}
+return self;
+}
+
+- (id<ChatAppServerEvents>) service
+{
+  return [[mService retain_stub] autorelease_stub];
+}
+
+- (BOOL) processOnInputProtocol: (id <TProtocol>) inProtocol
+                 outputProtocol: (id <TProtocol>) outProtocol
+{
+  NSString * messageName;
+  int messageType;
+  int seqID;
+  [inProtocol readMessageBeginReturningName: &messageName
+                                       type: &messageType
+                                 sequenceID: &seqID];
+  NSInvocation * invocation = [mMethodMap valueForKey: messageName];
+  if (invocation == nil) {
+    [TProtocolUtil skipType: TType_STRUCT onProtocol: inProtocol];
+    [inProtocol readMessageEnd];
+    TApplicationException * x = [TApplicationException exceptionWithType: TApplicationException_UNKNOWN_METHOD reason: [NSString stringWithFormat: @"Invalid method name: '%@'", messageName]];
+    [outProtocol writeMessageBeginWithName: messageName
+                                      type: TMessageType_EXCEPTION
+                                sequenceID: seqID];
+    [x write: outProtocol];
+    [outProtocol writeMessageEnd];
+    [[outProtocol transport] flush];
+    return YES;
+  }
+  // NSInvocation does not conform to NSCopying protocol
+  NSInvocation * i = [NSInvocation invocationWithMethodSignature: [invocation methodSignature]];
+  [i setSelector: [invocation selector]];
+  [i setArgument: &seqID atIndex: 2];
+  [i setArgument: &inProtocol atIndex: 3];
+  [i setArgument: &outProtocol atIndex: 4];
+  [i setTarget: self];
+  [i invoke];
+  return YES;
+}
+
+- (void) process_chatUpdated_withSequenceID: (int32_t) seqID inProtocol: (id<TProtocol>) inProtocol outProtocol: (id<TProtocol>) outProtocol
+{
+chatUpdated_args * args = [[chatUpdated_args alloc] init];
+[args read: inProtocol];
+[inProtocol readMessageEnd];
+[mService chatUpdated: [args revision]];
+[args release_stub];
+}
+
+- (void) dealloc
+{
+[mService release_stub];
+[mMethodMap release_stub];
+[super dealloc_stub];
+}
+
+@end
+

@@ -8,84 +8,37 @@
 
 #import "ChatAppClient.h"
 #import "ChatAppAPI.h"
-#import "TBinaryProtocol.h"
-#import "TNSStreamTransport.h"
-
-static void *ConnectedContext = &ConnectedContext;
 
 @interface ChatAppClient ()
 
-@property (nonatomic, strong) NSMutableSet *clients;
-@property (nonatomic, strong) NSMutableSet *activeClients;
-@property (nonatomic, strong) NSOperation *chatPollingOperation;
 @property (nonatomic, strong) NSOperationQueue *operationQueue;
-@property (nonatomic, assign) NSUInteger maxConcurrentOperationCount;
-
-- (void)createStreams;
-- (ChatAppAPIClient *)dequeueClient;
 
 @end
 
 @implementation ChatAppClient
 
-- (id)initWithServiceType:(NSString *)serviceType maxConcurrentOperationCount:(NSUInteger)maxConcurrentOperationCount
+- (id)initWithServiceType:(NSString *)serviceType maxConcurrentRequests:(NSUInteger)maxConcurrentRequests
 {
-	self = [super initWithServiceType:serviceType];
+	self = [super initWithServiceType:serviceType maxConcurrentRequests:maxConcurrentRequests];
 	if (self) {
-		self.clients = [NSMutableSet set];
-		self.activeClients = [NSMutableSet set];
+		self.thriftServiceClass = [ChatAppAPIClient class];
 		self.operationQueue = [[NSOperationQueue alloc] init];
-		self.operationQueue.maxConcurrentOperationCount = 0;
-		self.maxConcurrentOperationCount = maxConcurrentOperationCount;
-		
-		[self addObserver:self forKeyPath:@"connected" options:NSKeyValueObservingOptionNew context:ConnectedContext];
+		self.operationQueue.maxConcurrentOperationCount = maxConcurrentRequests;
 	}
 	
 	return self;
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
-	if (context == ConnectedContext) {
-		if (self.connected ) {
-			[self createStreams];
-		}
-	}
-	else {
-		return [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
-	}
-}
-
-- (void)createStreams
-{
-	for (int i = 0; i < self.maxConcurrentOperationCount; ++i) {
-		[self createStreamToHostWithCompletion:^(NSInputStream *inputStream, NSOutputStream *outputStream) {
-			TNSStreamTransport *transport = [[TNSStreamTransport alloc] initWithInputStream:inputStream outputStream:outputStream];
-			TBinaryProtocol *protocol = [[TBinaryProtocol alloc] initWithTransport:transport strictRead:YES strictWrite:YES];
-			ChatAppAPIClient *client = [[ChatAppAPIClient alloc] initWithProtocol:protocol];
-			[self.clients addObject:client];
-			self.operationQueue.maxConcurrentOperationCount = self.clients.count;
-		}];
-	}
-}
-
-- (ChatAppAPIClient *)dequeueClient
-{
-	ChatAppAPIClient *client = self.clients.anyObject;
-	if (client) {
-		[self.activeClients addObject:client];
-		[self.clients removeObject:client];
-	}
-	
-	return client;
 }
 
 #pragma mark ChatAppAsyncAPI
 
 - (void)addMessage:(Message *)message withCompletion:(void(^)(int32_t revision))completion
 {
-	if (completion) {
-		ChatAppAPIClient *client = [self dequeueClient];
+	if (!completion) {
+		return;
+	}
+
+	[self dequeueThriftService:^(id thriftService) {
+		ChatAppAPIClient *client = thriftService;
 		if (!client) {
 			completion(0);
 		}
@@ -96,20 +49,22 @@ static void *ConnectedContext = &ConnectedContext;
 			}];
 			
 			operation.completionBlock = ^{
-				dispatch_async(dispatch_get_main_queue(), ^{
-					[self.clients addObject:client];
-				});
+				[self enqueueThriftService:client];
 			};
 			
 			[self.operationQueue addOperation:operation];
 		}
-	}
+	}];
 }
 
 - (void)getChatRevisionWithCompletion:(void(^)(int32_t revision))completion
 {
-	if (completion) {
-		ChatAppAPIClient *client = [self dequeueClient];
+	if (!completion) {
+		return;
+	}
+
+	[self dequeueThriftService:^(id thriftService) {
+		ChatAppAPIClient *client = thriftService;
 		if (!client) {
 			completion(0);
 		}
@@ -120,40 +75,40 @@ static void *ConnectedContext = &ConnectedContext;
 			}];
 			
 			operation.completionBlock = ^{
-				dispatch_async(dispatch_get_main_queue(), ^{
-					[self.clients addObject:client];
-				});
+				[self enqueueThriftService:client];
 			};
 			
 			[self.operationQueue addOperation:operation];
 		}
-	}
+	}];
 }
 
 - (void)getChatWithCompletion:(void(^)(Chat *chat))completion
 {
-	if (completion) {
-		dispatch_async(dispatch_get_main_queue(), ^{
-			ChatAppAPIClient *client = [self dequeueClient];
-			if (!client) {
-				completion(nil);
-			}
-			else {
-				NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
-					Chat *chat = [client getChat];
-					if (completion) {
-						completion(chat);
-					}
-				}];
-				
-				operation.completionBlock = ^{
-					[self.clients addObject:client];
-				};
-				
-				[self.operationQueue addOperation:operation];
-			}
-		});
+	if (!completion) {
+		return;
 	}
+
+	[self dequeueThriftService:^(id thriftService) {
+		ChatAppAPIClient *client = thriftService;
+		if (!client) {
+			completion(nil);
+		}
+		else {
+			NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
+				Chat *chat = [client getChat];
+				if (completion) {
+					completion(chat);
+				}
+			}];
+			
+			operation.completionBlock = ^{
+				[self enqueueThriftService:client];
+			};
+			
+			[self.operationQueue addOperation:operation];
+		}
+	}];
 }
 
 @end

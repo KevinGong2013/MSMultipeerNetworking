@@ -52,7 +52,7 @@
 - (IBAction)startClient:(id)sender
 {
 	self.chat = [[Chat alloc] initWithRevision:0 messages:[NSMutableArray array]];
-	self.client = [[ChatAppClient alloc] initWithServiceType:@"ms-multichat" maxConcurrentOperationCount:3];
+	self.client = [[ChatAppClient alloc] initWithServiceType:@"ms-multichat" maxConcurrentRequests:3];
 	[self performSegueWithIdentifier:@"startClientSegue" sender:sender];
 }
 
