@@ -18,6 +18,5 @@
 
 @protocol MCSServerDelegate <NSObject>
 @optional
-- (void)multipeerServer:(MCSServer *)server didDisconnectPeer:(MCPeerID *)peerID;
-- (void)multipeerServer:(MCSServer *)server didStartInputStream:(NSInputStream *)inputStream outputStream:(NSOutputStream *)outputStream forPeer:(MCPeerID *)peerID;
+- (id)thriftProcessor;
 @end

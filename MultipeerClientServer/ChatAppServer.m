@@ -8,17 +8,10 @@
 
 #import "ChatAppServer.h"
 #import "ChatAppAPI.h"
-#import "TSharedProcessorFactory.h"
-#import "TBinaryProtocol.h"
-#import "TNSStreamTransport.h"
-#import "TTransportException.h"
 
 @interface ChatAppServer () <ChatAppAPI, MCSServerDelegate>
 
 @property (nonatomic, strong) Chat *chat;
-@property (nonatomic, strong) NSMutableDictionary *peerProcessorMap;
-
-- (void)addProcessor:(id<TProcessor>)processor forPeer:(MCPeerID *)peerID;
 
 @end
 
@@ -29,22 +22,10 @@
 	self = [super initWithServiceType:serviceType];
 	if (self) {
 		self.chat = chat;
-		self.peerProcessorMap = [NSMutableDictionary dictionary];
 		self.delegate = self;
 	}
 	
 	return self;
-}
-
-- (void)addProcessor:(id<TProcessor>)processor forPeer:(MCPeerID *)peerID
-{
-	NSMutableArray *processors = self.peerProcessorMap[ peerID ];
-	if (!processors) {
-		processors = [NSMutableArray array];
-		self.peerProcessorMap[ peerID ] = processors;
-	}
-	
-	[processors addObject:processor];
 }
 
 #pragma mark ChatAppAsyncAPI
@@ -94,29 +75,9 @@
 
 #pragma mark MCSServerDelegate
 
-- (void)multipeerServer:(MCSServer *)server didDisconnectPeer:(MCPeerID *)peerID
+- (id)thriftProcessor
 {
-	[self.peerProcessorMap removeObjectForKey:peerID];
-}
-
-- (void)multipeerServer:(MCSServer *)server didStartInputStream:(NSInputStream *)inputStream outputStream:(NSOutputStream *)outputStream forPeer:(MCPeerID *)peerID
-{
-	TNSStreamTransport *transport = [[TNSStreamTransport alloc] initWithInputStream:inputStream outputStream:outputStream];
-	TBinaryProtocol *protocol = [[TBinaryProtocol alloc] initWithTransport:transport strictRead:YES strictWrite:YES];
-	ChatAppAPIProcessor *processor = [[ChatAppAPIProcessor alloc] initWithChatAppAPI:self];
-	[self addProcessor:processor forPeer:peerID];
-
-	@try {
-		BOOL result = NO;
-		do {
-			@autoreleasepool {
-				result = [processor processOnInputProtocol:protocol outputProtocol:protocol];
-			}
-		} while (result);
-	}
-	@catch (TTransportException *exception) {
-		NSLog(@"Caught transport exception, abandoning client connection: %@", exception);
-	}
+	return [[ChatAppAPIProcessor alloc] initWithChatAppAPI:self];
 }
 
 @end

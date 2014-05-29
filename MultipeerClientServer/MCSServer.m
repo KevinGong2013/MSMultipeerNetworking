@@ -7,6 +7,10 @@
 //
 
 #import "MCSServer.h"
+#import "TSharedProcessorFactory.h"
+#import "TBinaryProtocol.h"
+#import "TNSStreamTransport.h"
+#import "TTransportException.h"
 
 static void *ConnectedPeersContext = &ConnectedPeersContext;
 
@@ -14,6 +18,9 @@ static void *ConnectedPeersContext = &ConnectedPeersContext;
 
 @property (nonatomic, copy, readonly) NSDictionary *discoveryInfo;
 @property (nonatomic, strong) MCNearbyServiceAdvertiser *advertiser;
+@property (nonatomic, strong) NSMutableDictionary *peerProcessorMap;
+
+- (void)addProcessor:(id<TProcessor>)processor forPeer:(MCPeerID *)peerID;
 
 @end
 
@@ -35,6 +42,8 @@ static dispatch_queue_t server_processor_queue() {
 	if (self) {
 		self.advertiser = [[MCNearbyServiceAdvertiser alloc] initWithPeer:self.session.myPeerID discoveryInfo:self.discoveryInfo serviceType:self.serviceType];
 		self.advertiser.delegate = self;
+		self.peerProcessorMap = [NSMutableDictionary dictionary];
+		
 		[self.advertiser startAdvertisingPeer];
 	}
 	
@@ -53,6 +62,17 @@ static dispatch_queue_t server_processor_queue() {
 	};
 }
 
+- (void)addProcessor:(id<TProcessor>)processor forPeer:(MCPeerID *)peerID
+{
+	NSMutableArray *processors = self.peerProcessorMap[ peerID ];
+	if (!processors) {
+		processors = [NSMutableArray array];
+		self.peerProcessorMap[ peerID ] = processors;
+	}
+	
+	[processors addObject:processor];
+}
+
 #pragma mark MCSessionDelegate
 
 - (void)session:(MCSession *)session peer:(MCPeerID *)peerID didChangeState:(MCSessionState)state
@@ -60,32 +80,53 @@ static dispatch_queue_t server_processor_queue() {
 	[super session:session peer:peerID didChangeState:state];
 	
 	if (state == MCSessionStateNotConnected) {
-		if ([self.delegate respondsToSelector:@selector(multipeerServer:didDisconnectPeer:)]) {
-			[self.delegate multipeerServer:self didDisconnectPeer:peerID];
-		}
+		[self.peerProcessorMap removeObjectForKey:peerID];
 	}
 }
 
 - (void)session:(MCSession *)session didReceiveStream:(NSInputStream *)stream withName:(NSString *)streamName fromPeer:(MCPeerID *)peerID
 {
-	NSError *error = nil;
-	NSOutputStream *outputStream = [self.session startStreamWithName:streamName toPeer:peerID error:&error];
-	outputStream.delegate = self;
-	[outputStream open];
-	
-	stream.delegate = self;
-	[stream open];
-	
-	NSLog(@"Server received stream named %@ from peer %@", streamName, peerID.displayName);
-	
-	if (error) {
-		NSLog(@"error: %@", error.localizedDescription);
+	BOOL isClientRequest = [streamName hasPrefix:@"out"];
+	if (!isClientRequest) {
+		return [super session:session didReceiveStream:stream withName:streamName fromPeer:peerID];
 	}
 	else {
-		if ([self.delegate respondsToSelector:@selector(multipeerServer:didStartInputStream:outputStream:forPeer:)]) {
-			dispatch_async(server_processor_queue(), ^{
-				[self.delegate multipeerServer:self didStartInputStream:stream outputStream:outputStream forPeer:peerID];
-			});
+		NSLog(@"Server received stream named %@ from peer %@", streamName, peerID.displayName);
+		
+		NSError *error = nil;
+		NSOutputStream *outputStream = [self.session startStreamWithName:streamName toPeer:peerID error:&error];
+		if (error) {
+			NSLog(@"error: %@", error.localizedDescription);
+		}
+		else {
+			outputStream.delegate = self;
+			[outputStream open];
+			
+			stream.delegate = self;
+			[stream open];
+			
+			TNSStreamTransport *transport = [[TNSStreamTransport alloc] initWithInputStream:stream outputStream:outputStream];
+			TBinaryProtocol *protocol = [[TBinaryProtocol alloc] initWithTransport:transport strictRead:YES strictWrite:YES];
+			if ([self.delegate respondsToSelector:@selector(thriftProcessor)]) {
+				id thriftProcessor = [self.delegate thriftProcessor];
+				if (thriftProcessor) {
+					[self addProcessor:thriftProcessor forPeer:peerID];
+					
+					dispatch_async(server_processor_queue(), ^{
+						@try {
+							BOOL result = NO;
+							do {
+								@autoreleasepool {
+									result = [thriftProcessor processOnInputProtocol:protocol outputProtocol:protocol];
+								}
+							} while (result);
+						}
+						@catch (TTransportException *exception) {
+							NSLog(@"Caught transport exception, abandoning client connection: %@", exception);
+						}
+					});
+				}
+			}
 		}
 	}
 }
