@@ -36,9 +36,9 @@ static dispatch_queue_t server_processor_queue() {
 
 @implementation MCSServer
 
-- (id)initWithServiceType:(NSString *)serviceType
+- (id)initWithServiceType:(NSString *)serviceType maxConcurrentRequests:(NSUInteger)maxConcurrentRequests
 {
-	self = [super initWithServiceType:serviceType];
+	self = [super initWithServiceType:serviceType maxConcurrentRequests:maxConcurrentRequests];
 	if (self) {
 		self.advertiser = [[MCNearbyServiceAdvertiser alloc] initWithPeer:self.session.myPeerID discoveryInfo:self.discoveryInfo serviceType:self.serviceType];
 		self.advertiser.delegate = self;

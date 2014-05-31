@@ -7,23 +7,21 @@
 //
 
 #import "ChatAppClient.h"
+#import "MCSClient.h"
 #import "ChatAppAPI.h"
 
 @interface ChatAppClient ()
 
-@property (nonatomic, strong) NSOperationQueue *operationQueue;
-
+@property (nonatomic, strong) MCSClient *client;
 @end
 
 @implementation ChatAppClient
 
-- (id)initWithServiceType:(NSString *)serviceType maxConcurrentRequests:(NSUInteger)maxConcurrentRequests
+- (id)init
 {
-	self = [super initWithServiceType:serviceType maxConcurrentRequests:maxConcurrentRequests];
+	self = [super initWithServiceType:@"ms-multichat" maxConcurrentRequests:3];
 	if (self) {
 		self.thriftServiceClass = [ChatAppAPIClient class];
-		self.operationQueue = [[NSOperationQueue alloc] init];
-		self.operationQueue.maxConcurrentOperationCount = maxConcurrentRequests;
 	}
 	
 	return self;
@@ -36,24 +34,11 @@
 	if (!completion) {
 		return;
 	}
-
-	[self dequeueThriftService:^(id thriftService) {
+	
+	[self sendThriftOperation:^(id thriftService) {
 		ChatAppAPIClient *client = thriftService;
-		if (!client) {
-			completion(0);
-		}
-		else {
-			NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
-				int32_t result = [client addMessage:message];
-				completion(result);
-			}];
-			
-			operation.completionBlock = ^{
-				[self enqueueThriftService:client];
-			};
-			
-			[self.operationQueue addOperation:operation];
-		}
+		int32_t result = [client addMessage:message];
+		completion(result);
 	}];
 }
 
@@ -63,23 +48,10 @@
 		return;
 	}
 
-	[self dequeueThriftService:^(id thriftService) {
+	[self sendThriftOperation:^(id thriftService) {
 		ChatAppAPIClient *client = thriftService;
-		if (!client) {
-			completion(0);
-		}
-		else {
-			NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
-				int32_t revision = [client getChatRevision];
-				completion(revision);
-			}];
-			
-			operation.completionBlock = ^{
-				[self enqueueThriftService:client];
-			};
-			
-			[self.operationQueue addOperation:operation];
-		}
+		int32_t revision = [client getChatRevision];
+		completion(revision);
 	}];
 }
 
@@ -88,25 +60,12 @@
 	if (!completion) {
 		return;
 	}
-
-	[self dequeueThriftService:^(id thriftService) {
+	
+	[self sendThriftOperation:^(id thriftService) {
 		ChatAppAPIClient *client = thriftService;
-		if (!client) {
-			completion(nil);
-		}
-		else {
-			NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
-				Chat *chat = [client getChat];
-				if (completion) {
-					completion(chat);
-				}
-			}];
-			
-			operation.completionBlock = ^{
-				[self enqueueThriftService:client];
-			};
-			
-			[self.operationQueue addOperation:operation];
+		Chat *chat = [client getChat];
+		if (completion) {
+			completion(chat);
 		}
 	}];
 }

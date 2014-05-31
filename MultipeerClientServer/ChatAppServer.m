@@ -19,7 +19,7 @@
 
 - (id)initWithServiceType:(NSString *)serviceType chat:(Chat *)chat
 {
-	self = [super initWithServiceType:serviceType];
+	self = [super initWithServiceType:serviceType maxConcurrentRequests:3];
 	if (self) {
 		self.chat = chat;
 		self.delegate = self;

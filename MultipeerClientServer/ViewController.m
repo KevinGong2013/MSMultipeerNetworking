@@ -13,6 +13,8 @@
 #import "ServerBrowserViewController.h"
 #import "ChatViewController.h"
 
+static void *ConnectedContext = &ConnectedContext;
+
 @interface ViewController () <ServerBrowserViewControllerDelegate>
 
 @property (nonatomic, strong) ChatAppClient *client;
@@ -31,6 +33,20 @@
 	[super viewDidLoad];
 	
 	self.chat = [[Chat alloc] initWithRevision:0 messages:[NSMutableArray array]];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+	if (context == ConnectedContext) {
+		dispatch_async(dispatch_get_main_queue(), ^{
+			[self dismissViewControllerAnimated:YES completion:^{
+				[self performSegueWithIdentifier:@"joinServerSegue" sender:self];
+			}];
+		});
+	}
+	else {
+		[super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+	}
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
@@ -52,7 +68,7 @@
 - (IBAction)startClient:(id)sender
 {
 	self.chat = [[Chat alloc] initWithRevision:0 messages:[NSMutableArray array]];
-	self.client = [[ChatAppClient alloc] initWithServiceType:@"ms-multichat" maxConcurrentRequests:3];
+	self.client = [[ChatAppClient alloc] init];
 	[self performSegueWithIdentifier:@"startClientSegue" sender:sender];
 }
 
@@ -63,18 +79,19 @@
 	[self performSegueWithIdentifier:@"startServerSegue" sender:sender];
 }
 
+- (void)setClient:(ChatAppClient *)client
+{
+	[_client removeObserver:self forKeyPath:@"connected"];
+	_client = client;
+	[_client addObserver:self forKeyPath:@"connected" options:NSKeyValueObservingOptionNew context:ConnectedContext];
+}
+
 #pragma mark ServerBrowserViewControllerDelegate
 
 - (void)serverBrowserViewController:(ServerBrowserViewController *)viewController wantsToJoinPeer:(MCPeerID *)peerID
 {
 	if (self.client) {
-		[self.client connectToHost:peerID completion:^{
-			dispatch_async(dispatch_get_main_queue(), ^{
-				[self dismissViewControllerAnimated:YES completion:^{
-					[self performSegueWithIdentifier:@"joinServerSegue" sender:self];
-				}];
-			});
-		}];
+		[self.client connectToHost:peerID];
 	}
 }
 

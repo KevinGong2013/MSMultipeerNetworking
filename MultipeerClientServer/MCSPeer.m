@@ -7,16 +7,42 @@
 //
 
 #import "MCSPeer.h"
-#import "MCSStreamRequest.h"
 
-@interface MCSPeer () <NSStreamDelegate>
+@interface MCSStreamRequest : NSObject
+
+@property (nonatomic, strong) NSOutputStream *outputStream;
+@property (nonatomic, copy) void (^completion)(NSInputStream *inputStream, NSOutputStream *outputStream);
+
+- (id)initWithOutputStream:(NSOutputStream *)outputStream completion:(void (^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion;
+
+@end
+
+@implementation MCSStreamRequest
+
+- (id)initWithOutputStream:(NSOutputStream *)outputStream completion:(void (^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion
+{
+	self = [super init];
+	if (self) {
+		self.outputStream = outputStream;
+		self.completion = completion;
+	}
+	
+	return self;
+}
+
+@end
+
+@interface MCSPeer () <MCSStreamCreationDelegate, NSStreamDelegate>
 
 @property (nonatomic, strong) MCPeerID *peerID;
 @property (nonatomic, strong) MCSession *session;
 @property (nonatomic, copy) NSString *serviceType;
 @property (nonatomic, copy) NSString *uuid;
 @property (nonatomic, copy) NSArray *connectedPeers;
+@property (nonatomic, strong) MCSThriftController *thriftController;
 @property (nonatomic, strong) NSMutableDictionary *streamRequests;
+@property (nonatomic, strong) NSOperationQueue *operationQueue;
+@property (nonatomic, assign) NSUInteger *maxConcurrentRequests;
 
 - (NSString *)stringForSessionState:(MCSessionState)state;
 
@@ -24,7 +50,7 @@
 
 @implementation MCSPeer
 
-- (id)initWithServiceType:(NSString *)serviceType
+- (id)initWithServiceType:(NSString *)serviceType maxConcurrentRequests:(NSUInteger)maxConcurrentRequests
 {
 	self = [super init];
 	if (self) {
@@ -35,23 +61,28 @@
 		self.peerID = [[MCPeerID alloc] initWithDisplayName:[UIDevice currentDevice].name];
 		self.session = [[MCSession alloc] initWithPeer:self.peerID];
 		self.session.delegate = self;
+		
+		self.operationQueue = [[NSOperationQueue alloc] init];
+		self.operationQueue.maxConcurrentOperationCount = maxConcurrentRequests;
+		
+		self.thriftController = [[MCSThriftController alloc] init];
+		self.thriftController.streamCreationDelegate = self;
 	}
 	
 	return self;
 }
 
-- (NSString *)stringForSessionState:(MCSessionState)state
+- (void)sendThriftOperation:(void(^)(id thriftService))thriftOperation
 {
-	switch (state) {
-		case MCSessionStateNotConnected:
-			return @"MCSessionStateNotConnected";
-		case MCSessionStateConnecting:
-			return @"MCSessionStateConnecting";
-		case MCSessionStateConnected:
-			return @"MCSessionStateConnected";
-		default:
-			return @"Invalid state";
-	}
+	__weak MCSPeer *weakSelf = self;
+	NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
+		[weakSelf.thriftController dequeueThriftService:^(id thriftService) {
+			thriftOperation(thriftService);
+			[self.thriftController enqueueThriftService:thriftService];
+		}];
+	}];
+	
+	[self.operationQueue addOperation:operation];
 }
 
 - (void)startStreamWithName:(NSString *)name toPeer:(MCPeerID *)peerID completion:(void(^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion
@@ -69,6 +100,30 @@
 		MCSStreamRequest *request = [[MCSStreamRequest alloc] initWithOutputStream:outputStream completion:completion];
 		self.streamRequests[ name ] = request;
 	}
+}
+
+- (NSString *)stringForSessionState:(MCSessionState)state
+{
+	switch (state) {
+		case MCSessionStateNotConnected:
+			return @"MCSessionStateNotConnected";
+		case MCSessionStateConnecting:
+			return @"MCSessionStateConnecting";
+		case MCSessionStateConnected:
+			return @"MCSessionStateConnected";
+		default:
+			return @"Invalid state";
+	}
+}
+
+- (Class)thriftServiceClass
+{
+	return self.thriftController.thriftServiceClass;
+}
+
+- (void)setThriftServiceClass:(Class)thriftServiceClass
+{
+	self.thriftController.thriftServiceClass = thriftServiceClass;
 }
 
 #pragma mark MCSessionDelegate

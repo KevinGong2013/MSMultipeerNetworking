@@ -9,15 +9,22 @@
 @import Foundation;
 @import MultipeerConnectivity;
 
+#import "MCSThriftController.h"
+
 @interface MCSPeer : NSObject <MCSessionDelegate>
+
+@property (nonatomic, assign) Class thriftServiceClass;
 
 @property (nonatomic, strong, readonly) MCSession *session;
 @property (nonatomic, copy, readonly) NSString *serviceType;
 @property (nonatomic, copy, readonly) NSString *uuid;
 @property (nonatomic, copy, readonly) NSArray *connectedPeers;
+@property (nonatomic, strong, readonly) MCSThriftController *thriftController;
+@property (nonatomic, assign) BOOL connected;
 
-- (id)initWithServiceType:(NSString *)serviceType;
+- (id)initWithServiceType:(NSString *)serviceType maxConcurrentRequests:(NSUInteger)maxConcurrentRequests;
 
-- (void)startStreamWithName:(NSString *)name toPeer:(MCPeerID *)peerID completion:(void(^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion;
+- (void)sendThriftOperation:(void(^)(id thriftService))thriftOperation;
 
 @end
+
