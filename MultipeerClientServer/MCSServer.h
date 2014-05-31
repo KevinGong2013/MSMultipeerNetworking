@@ -8,15 +8,6 @@
 
 #import "MCSPeer.h"
 
-@protocol MCSServerDelegate;
-
 @interface MCSServer : MCSPeer
 
-@property (nonatomic, weak) id<MCSServerDelegate> delegate;
-
-@end
-
-@protocol MCSServerDelegate <NSObject>
-@optional
-- (id)thriftProcessor;
 @end

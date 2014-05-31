@@ -8,31 +8,7 @@
 
 #import "MCSPeer.h"
 
-@interface MCSStreamRequest : NSObject
-
-@property (nonatomic, strong) NSOutputStream *outputStream;
-@property (nonatomic, copy) void (^completion)(NSInputStream *inputStream, NSOutputStream *outputStream);
-
-- (id)initWithOutputStream:(NSOutputStream *)outputStream completion:(void (^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion;
-
-@end
-
-@implementation MCSStreamRequest
-
-- (id)initWithOutputStream:(NSOutputStream *)outputStream completion:(void (^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion
-{
-	self = [super init];
-	if (self) {
-		self.outputStream = outputStream;
-		self.completion = completion;
-	}
-	
-	return self;
-}
-
-@end
-
-@interface MCSPeer () <MCSStreamCreationDelegate, NSStreamDelegate>
+@interface MCSPeer ()
 
 @property (nonatomic, strong) MCPeerID *peerID;
 @property (nonatomic, strong) MCSession *session;
@@ -40,7 +16,6 @@
 @property (nonatomic, copy) NSString *uuid;
 @property (nonatomic, copy) NSArray *connectedPeers;
 @property (nonatomic, strong) MCSThriftController *thriftController;
-@property (nonatomic, strong) NSMutableDictionary *streamRequests;
 @property (nonatomic, strong) NSOperationQueue *operationQueue;
 @property (nonatomic, assign) NSUInteger *maxConcurrentRequests;
 
@@ -57,16 +32,12 @@
 		self.serviceType = serviceType;
 		self.uuid = [[NSUUID UUID] UUIDString];
 		self.connectedPeers = [NSArray array];
-		self.streamRequests = [NSMutableDictionary dictionary];
 		self.peerID = [[MCPeerID alloc] initWithDisplayName:[UIDevice currentDevice].name];
 		self.session = [[MCSession alloc] initWithPeer:self.peerID];
 		self.session.delegate = self;
-		
+		self.thriftController = [[MCSThriftController alloc] initWithPeer:self];
 		self.operationQueue = [[NSOperationQueue alloc] init];
 		self.operationQueue.maxConcurrentOperationCount = maxConcurrentRequests;
-		
-		self.thriftController = [[MCSThriftController alloc] init];
-		self.thriftController.streamCreationDelegate = self;
 	}
 	
 	return self;
@@ -85,7 +56,7 @@
 	[self.operationQueue addOperation:operation];
 }
 
-- (void)startStreamWithName:(NSString *)name toPeer:(MCPeerID *)peerID completion:(void(^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion
+- (NSOutputStream *)startStreamWithName:(NSString *)name toPeer:(MCPeerID *)peerID
 {
 	NSError *error = nil;
 	NSOutputStream *outputStream = [self.session startStreamWithName:name toPeer:peerID error:&error];
@@ -94,12 +65,9 @@
 	}
 	else {
 		NSLog(@"Started stream named %@ with host %@", name, peerID.displayName);
-		
-		outputStream.delegate = self;
-		[outputStream open];
-		MCSStreamRequest *request = [[MCSStreamRequest alloc] initWithOutputStream:outputStream completion:completion];
-		self.streamRequests[ name ] = request;
 	}
+	
+	return outputStream;
 }
 
 - (NSString *)stringForSessionState:(MCSessionState)state
@@ -154,14 +122,7 @@
 
 - (void)session:(MCSession *)session didReceiveStream:(NSInputStream *)stream withName:(NSString *)streamName fromPeer:(MCPeerID *)peerID
 {
-	MCSStreamRequest *streamRequest = self.streamRequests[ streamName ];
-	if (streamRequest && streamRequest.completion) {
-		stream.delegate = self;
-		[stream open];
-		
-		[self.streamRequests removeObjectForKey:streamName];
-		streamRequest.completion(stream, streamRequest.outputStream);
-	}
+	[self.thriftController receiveStream:stream withName:streamName fromPeer:peerID];
 }
 
 - (void)session:(MCSession *)session didStartReceivingResourceWithName:(NSString *)resourceName fromPeer:(MCPeerID *)peerID withProgress:(NSProgress *)progress

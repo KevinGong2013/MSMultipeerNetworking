@@ -9,19 +9,18 @@
 @import Foundation;
 @import MultipeerConnectivity;
 
-@protocol MCSStreamCreationDelegate <NSObject>
-
-- (void)startStreamWithName:(NSString *)name toPeer:(MCPeerID *)peerID completion:(void(^)(NSInputStream *inputStream, NSOutputStream *outputStream))completion;
-
-@end
+@class MCSPeer;
 
 @interface MCSThriftController : NSObject
 
 @property (nonatomic, assign) NSUInteger maxConnections;
 @property (nonatomic, assign) Class thriftServiceClass;
-@property (nonatomic, weak) id<MCSStreamCreationDelegate> streamCreationDelegate;
+
+- (id)initWithPeer:(MCSPeer *)peer;
 
 - (void)startBidirectionalConnectionsToPeer:(MCPeerID *)peerID;
+- (void)receiveStream:(NSInputStream *)stream withName:(NSString *)streamName fromPeer:(MCPeerID *)peerID;
+- (void)removeConnectionsForPeer:(MCPeerID *)peerID;
 
 - (void)enqueueThriftService:(id)thriftService;
 - (void)dequeueThriftService:(void (^)(id thriftService))completion;

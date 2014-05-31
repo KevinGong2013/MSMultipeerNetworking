@@ -11,9 +11,12 @@
 
 #import "MCSThriftController.h"
 
+@protocol MCSPeerDelegate;
+
 @interface MCSPeer : NSObject <MCSessionDelegate>
 
 @property (nonatomic, assign) Class thriftServiceClass;
+@property (nonatomic, weak) id<MCSPeerDelegate> delegate;
 
 @property (nonatomic, strong, readonly) MCSession *session;
 @property (nonatomic, copy, readonly) NSString *serviceType;
@@ -24,7 +27,13 @@
 
 - (id)initWithServiceType:(NSString *)serviceType maxConcurrentRequests:(NSUInteger)maxConcurrentRequests;
 
+- (NSOutputStream *)startStreamWithName:(NSString *)streamName toPeer:(MCPeerID *)peer;
+
 - (void)sendThriftOperation:(void(^)(id thriftService))thriftOperation;
 
 @end
 
+@protocol MCSPeerDelegate <NSObject>
+@optional
+- (id)thriftProcessor;
+@end

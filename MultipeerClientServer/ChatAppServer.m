@@ -9,7 +9,7 @@
 #import "ChatAppServer.h"
 #import "ChatAppAPI.h"
 
-@interface ChatAppServer () <ChatAppAPI, MCSServerDelegate>
+@interface ChatAppServer () <ChatAppAPI, MCSPeerDelegate>
 
 @property (nonatomic, strong) Chat *chat;
 
