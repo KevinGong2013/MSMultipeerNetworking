@@ -206,6 +206,7 @@ static dispatch_queue_t processor_queue() {
 			
 			if (!thriftService) {
 				NSLog(@"Error: thriftService is nil.");
+				completion(nil);
 				return;
 			}
 			

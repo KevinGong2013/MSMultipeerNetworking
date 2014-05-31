@@ -48,7 +48,13 @@
 	__weak MCSPeer *weakSelf = self;
 	NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
 		[weakSelf.thriftController dequeueThriftService:^(id thriftService) {
-			thriftOperation(thriftService);
+			@try {
+				thriftOperation(thriftService);
+			}
+			@catch (NSException * e) {
+				NSLog(@"Error, exception: %@", e);
+			}
+
 			[self.thriftController enqueueThriftService:thriftService];
 		}];
 	}];

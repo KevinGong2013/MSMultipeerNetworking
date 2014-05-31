@@ -62,8 +62,13 @@
 	}
 	
 	[self sendThriftOperation:^(id thriftService) {
+		Chat *chat = nil;
+				
 		ChatAppAPIClient *client = thriftService;
-		Chat *chat = [client getChat];
+		if (client) {
+			chat = [client getChat];
+		}
+
 		if (completion) {
 			completion(chat);
 		}
