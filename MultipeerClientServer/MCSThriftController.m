@@ -83,7 +83,7 @@ static dispatch_queue_t processor_queue() {
 
 - (void)startBidirectionalConnectionsToPeer:(MCPeerID *)peerID
 {
-	if (!self.thriftServiceClass) {
+	if (!self.outgoingThriftServiceClass) {
 		NSLog(@"Error: thriftServiceClass is nil.");
 	}
 
@@ -101,12 +101,12 @@ static dispatch_queue_t processor_queue() {
 			TNSStreamTransport *transport = [[TNSStreamTransport alloc] initWithInputStream:inputStream outputStream:outputStream];
 			TBinaryProtocol *protocol = [[TBinaryProtocol alloc] initWithTransport:transport strictRead:YES strictWrite:YES];
 			
-			id thriftService = [self.thriftServiceClass alloc];
+			id thriftService = [self.outgoingThriftServiceClass alloc];
 			if (thriftService) {
 				if ([thriftService respondsToSelector:@selector(initWithProtocol:)]) {
 					thriftService = [thriftService initWithProtocol:protocol];
 					if (!thriftService) {
-						NSLog(@"Error: Could not create thrift service for class %@", NSStringFromClass(self.thriftServiceClass));
+						NSLog(@"Error: Could not create thrift service for class %@", NSStringFromClass(self.outgoingThriftServiceClass));
 					}
 					else {
 						[self.thriftServices addObject:thriftService];
@@ -152,8 +152,8 @@ static dispatch_queue_t processor_queue() {
 		
 		TNSStreamTransport *transport = [[TNSStreamTransport alloc] initWithInputStream:stream outputStream:outputStream];
 		TBinaryProtocol *protocol = [[TBinaryProtocol alloc] initWithTransport:transport strictRead:YES strictWrite:YES];
-		if ([self.peer.delegate respondsToSelector:@selector(thriftProcessor)]) {
-			id thriftProcessor = [self.peer.delegate thriftProcessor];
+		if (self.incomingThriftProcessorInstantiationBlock) {
+			id thriftProcessor = self.incomingThriftProcessorInstantiationBlock();
 			if (thriftProcessor) {
 				[self addProcessor:thriftProcessor forPeer:peerID];
 				

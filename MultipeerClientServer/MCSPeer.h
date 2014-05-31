@@ -11,12 +11,10 @@
 
 #import "MCSThriftController.h"
 
-@protocol MCSPeerDelegate;
-
 @interface MCSPeer : NSObject <MCSessionDelegate>
 
-@property (nonatomic, assign) Class thriftServiceClass;
-@property (nonatomic, weak) id<MCSPeerDelegate> delegate;
+@property (nonatomic, assign) Class outgoingThriftServiceClass;
+@property (nonatomic, copy) id (^incomingThriftProcessorInstantiationBlock)(void);
 
 @property (nonatomic, strong, readonly) MCSession *session;
 @property (nonatomic, copy, readonly) NSString *serviceType;
@@ -31,9 +29,4 @@
 
 - (void)sendThriftOperation:(void(^)(id thriftService))thriftOperation;
 
-@end
-
-@protocol MCSPeerDelegate <NSObject>
-@optional
-- (id)thriftProcessor;
 @end

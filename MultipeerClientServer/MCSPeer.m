@@ -55,7 +55,9 @@
 				NSLog(@"Error, exception: %@", e);
 			}
 
-			[self.thriftController enqueueThriftService:thriftService];
+			if (thriftOperation) {
+				[self.thriftController enqueueThriftService:thriftService];
+			}
 		}];
 	}];
 	
@@ -90,14 +92,24 @@
 	}
 }
 
-- (Class)thriftServiceClass
+- (Class)outgoingThriftServiceClass
 {
-	return self.thriftController.thriftServiceClass;
+	return self.thriftController.outgoingThriftServiceClass;
 }
 
-- (void)setThriftServiceClass:(Class)thriftServiceClass
+- (void)setOutgoingThriftServiceClass:(Class)outgoingThriftServiceClass
 {
-	self.thriftController.thriftServiceClass = thriftServiceClass;
+	self.thriftController.outgoingThriftServiceClass = outgoingThriftServiceClass;
+}
+
+- (id (^)(void))incomingThriftProcessorInstantiationBlock
+{
+	return self.thriftController.incomingThriftProcessorInstantiationBlock;
+}
+
+- (void)setIncomingThriftProcessorInstantiationBlock:(id (^)(void))incomingThriftProcessorInstantiationBlock
+{
+	self.thriftController.incomingThriftProcessorInstantiationBlock = incomingThriftProcessorInstantiationBlock;
 }
 
 #pragma mark MCSessionDelegate

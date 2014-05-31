@@ -14,7 +14,8 @@
 @interface MCSThriftController : NSObject
 
 @property (nonatomic, assign) NSUInteger maxConnections;
-@property (nonatomic, assign) Class thriftServiceClass;
+@property (nonatomic, assign) Class outgoingThriftServiceClass;
+@property (nonatomic, copy) id (^incomingThriftProcessorInstantiationBlock)(void);
 
 - (id)initWithPeer:(MCSPeer *)peer;
 

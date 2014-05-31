@@ -9,7 +9,7 @@
 #import "ChatAppServer.h"
 #import "ChatAppAPI.h"
 
-@interface ChatAppServer () <ChatAppAPI, MCSPeerDelegate>
+@interface ChatAppServer () <ChatAppAPI>
 
 @property (nonatomic, strong) Chat *chat;
 
@@ -22,7 +22,10 @@
 	self = [super initWithServiceType:serviceType maxConcurrentRequests:3];
 	if (self) {
 		self.chat = chat;
-		self.delegate = self;
+
+		__weak ChatAppServer *weakSelf = self;
+		self.outgoingThriftServiceClass = [ChatAppServerEventsClient class];
+		self.incomingThriftProcessorInstantiationBlock = ^{ return [[ChatAppAPIProcessor alloc] initWithChatAppAPI:weakSelf]; };
 	}
 	
 	return self;

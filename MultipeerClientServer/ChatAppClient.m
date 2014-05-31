@@ -10,7 +10,7 @@
 #import "MCSClient.h"
 #import "ChatAppAPI.h"
 
-@interface ChatAppClient ()
+@interface ChatAppClient () <ChatAppServerEvents>
 
 @property (nonatomic, strong) MCSClient *client;
 @end
@@ -21,7 +21,10 @@
 {
 	self = [super initWithServiceType:@"ms-multichat" maxConcurrentRequests:3];
 	if (self) {
-		self.thriftServiceClass = [ChatAppAPIClient class];
+		
+		__weak ChatAppClient *weakSelf = self;
+		self.outgoingThriftServiceClass = [ChatAppAPIClient class];
+		self.incomingThriftProcessorInstantiationBlock = ^{ return [[ChatAppServerEventsProcessor alloc] initWithChatAppServerEvents:weakSelf]; };
 	}
 	
 	return self;
@@ -73,6 +76,13 @@
 			completion(chat);
 		}
 	}];
+}
+
+#pragma mark ChatAppServerEvents
+
+- (void)chatUpdated:(int32_t)revision
+{
+	
 }
 
 @end
