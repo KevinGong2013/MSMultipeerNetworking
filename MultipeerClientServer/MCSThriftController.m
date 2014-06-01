@@ -7,6 +7,7 @@
 //
 
 #import "MCSThriftController.h"
+#import "MCSThriftPeerController.h"
 #import "MCSPeer.h"
 #import "TBinaryProtocol.h"
 #import "TNSStreamTransport.h"
@@ -47,12 +48,15 @@
 
 @property (nonatomic, strong) MCSPeer *peer;
 @property (nonatomic, strong) NSMutableDictionary *streamRequests;
-@property (nonatomic, strong) NSMutableSet *thriftServices;
-@property (nonatomic, strong) NSMutableSet *activeThriftServices;
-@property (nonatomic, strong) NSMutableDictionary *peerProcessorMap;
+@property (nonatomic, strong) NSMutableDictionary *thriftPeerControllers;
 
-- (void)addProcessor:(id<TProcessor>)processor forPeer:(MCPeerID *)peerID;
+- (MCSThriftPeerController *)thriftPeerControllerForPeer:(MCPeerID *)peerID;
+
 - (void)addProcessorFromStream:(NSInputStream *)stream withName:(NSString *)streamName fromPeerID:(MCPeerID *)peerID;
+
+- (void)addThriftService:(id)thriftService forPeer:(MCPeerID *)peerID;
+- (void)addProcessor:(id<TProcessor>)processor forPeer:(MCPeerID *)peerID;
+
 @end
 
 static dispatch_queue_t dispatch_thrift_queue() {
@@ -73,9 +77,7 @@ static dispatch_queue_t dispatch_thrift_queue() {
 	if (self) {
 		self.peer = peer;
 		self.streamRequests = [NSMutableDictionary dictionary];
-		self.thriftServices = [NSMutableSet set];
-		self.activeThriftServices = [NSMutableSet set];
-		self.peerProcessorMap = [NSMutableDictionary dictionary];
+		self.thriftPeerControllers = [NSMutableDictionary dictionary];
 	}
 	
 	return self;
@@ -87,8 +89,6 @@ static dispatch_queue_t dispatch_thrift_queue() {
 		NSLog(@"Error: thriftServiceClass is nil.");
 	}
 	
-	
-
 	for (NSUInteger i = 0; i < self.maxConnections; ++i) {
 		NSString *streamName = [NSString stringWithFormat:@"out-%@", [[NSUUID UUID] UUIDString]];
 		NSOutputStream *outputStream = [self.peer startStreamWithName:streamName toPeer:peerID];
@@ -111,7 +111,7 @@ static dispatch_queue_t dispatch_thrift_queue() {
 						NSLog(@"Error: Could not create thrift service for class %@", NSStringFromClass(self.outgoingThriftServiceClass));
 					}
 					else {
-						[self.thriftServices addObject:thriftService];
+						[self addThriftService:thriftService forPeer:peerID];
 					}
 				}
 			}
@@ -137,6 +137,17 @@ static dispatch_queue_t dispatch_thrift_queue() {
 	else {
 		[self addProcessorFromStream:stream withName:streamName fromPeerID:peerID];
 	}
+}
+
+- (MCSThriftPeerController *)thriftPeerControllerForPeer:(MCPeerID *)peerID
+{
+	MCSThriftPeerController *thriftPeerController = self.thriftPeerControllers[ peerID ];
+	if (!thriftPeerController) {
+		thriftPeerController = [[MCSThriftPeerController alloc] initWithPeer:peerID];
+		self.thriftPeerControllers[ peerID ] = thriftPeerController;
+	}
+	
+	return thriftPeerController;
 }
 
 - (void)addProcessorFromStream:(NSInputStream *)stream withName:(NSString *)streamName fromPeerID:(MCPeerID *)peerID
@@ -179,27 +190,28 @@ static dispatch_queue_t dispatch_thrift_queue() {
 
 - (void)removeConnectionsForPeer:(MCPeerID *)peerID
 {
-	[self.peerProcessorMap removeObjectForKey:peerID];
+	[self.thriftPeerControllers removeObjectForKey:peerID];
 }
 
-- (void)enqueueThriftService:(id)thriftService
+- (void)enqueueThriftService:(id)thriftService forPeer:(MCPeerID *)peerID
 {
 	dispatch_async(dispatch_thrift_queue(), ^{
-		[self.thriftServices addObject:thriftService];
+		MCSThriftPeerController *thriftPeerController = [self thriftPeerControllerForPeer:peerID];
+		[thriftPeerController enqueueThriftService:thriftService];
 	});
 }
 
-- (void)dequeueThriftService:(void (^)(id thriftService))completion
+- (void)dequeueThriftService:(void (^)(id thriftService))completion forPeer:(MCPeerID *)peerID
 {
 	static const float timeout = 10.f;
 	
 	if (completion) {
 		dispatch_async(dispatch_thrift_queue(), ^{
 			CFAbsoluteTime maxTryTime = CFAbsoluteTimeGetCurrent() + timeout;
-
-			id thriftService = self.thriftServices.anyObject;
+			MCSThriftPeerController *thriftPeerController = [self thriftPeerControllerForPeer:peerID];
+			id thriftService = [thriftPeerController dequeueThriftService];
 			while (!thriftService) {
-				thriftService = self.thriftServices.anyObject;
+				thriftService = [thriftPeerController dequeueThriftService];
 				
 				if (CFAbsoluteTimeGetCurrent() > maxTryTime) {
 					break;
@@ -212,22 +224,21 @@ static dispatch_queue_t dispatch_thrift_queue() {
 				return;
 			}
 			
-			[self.activeThriftServices addObject:thriftService];
-			[self.thriftServices removeObject:thriftService];
 			completion(thriftService);
 		});
 	}
 }
 
+- (void)addThriftService:(id)thriftService forPeer:(MCPeerID *)peerID
+{
+	MCSThriftPeerController *thriftPeerController = [self thriftPeerControllerForPeer:peerID];
+	[thriftPeerController addThriftService:thriftService];
+}
+
 - (void)addProcessor:(id<TProcessor>)processor forPeer:(MCPeerID *)peerID
 {
-	NSMutableArray *processors = self.peerProcessorMap[ peerID ];
-	if (!processors) {
-		processors = [NSMutableArray array];
-		self.peerProcessorMap[ peerID ] = processors;
-	}
-	
-	[processors addObject:processor];
+	MCSThriftPeerController *thriftPeerController = [self thriftPeerControllerForPeer:peerID];
+	[thriftPeerController addProcessor:processor];
 }
 
 @end

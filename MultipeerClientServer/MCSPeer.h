@@ -21,6 +21,7 @@
 @property (nonatomic, copy, readonly) NSString *uuid;
 @property (nonatomic, copy, readonly) NSArray *connectedPeers;
 @property (nonatomic, strong, readonly) MCSThriftController *thriftController;
+@property (nonatomic, strong, readonly) NSOperationQueue *operationQueue;
 @property (nonatomic, assign) BOOL connected;
 
 - (id)initWithServiceType:(NSString *)serviceType maxConcurrentRequests:(NSUInteger)maxConcurrentRequests;

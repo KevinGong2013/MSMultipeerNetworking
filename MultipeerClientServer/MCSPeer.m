@@ -45,23 +45,7 @@
 
 - (void)sendThriftOperation:(void(^)(id thriftService))thriftOperation
 {
-	__weak MCSPeer *weakSelf = self;
-	NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
-		[weakSelf.thriftController dequeueThriftService:^(id thriftService) {
-			@try {
-				thriftOperation(thriftService);
-			}
-			@catch (NSException * e) {
-				NSLog(@"Error, exception: %@", e);
-			}
-
-			if (thriftService) {
-				[self.thriftController enqueueThriftService:thriftService];
-			}
-		}];
-	}];
-	
-	[self.operationQueue addOperation:operation];
+	/**/
 }
 
 - (NSOutputStream *)startStreamWithName:(NSString *)name toPeer:(MCPeerID *)peerID

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		CA7A87C8B43E4BCF9C237ADC /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B9F4AD5902C94ED3B42F1366 /* libPods.a */; };
 		D830F9DD193981420050D1CC /* MCSThriftController.m in Sources */ = {isa = PBXBuildFile; fileRef = D830F9DC193981420050D1CC /* MCSThriftController.m */; };
+		D830F9E0193AACFB0050D1CC /* MCSThriftPeerController.m in Sources */ = {isa = PBXBuildFile; fileRef = D830F9DF193AACFB0050D1CC /* MCSThriftPeerController.m */; };
 		D846F4F3190391AF003792AC /* MCSPeer.m in Sources */ = {isa = PBXBuildFile; fileRef = D846F4F2190391AF003792AC /* MCSPeer.m */; };
 		D846F4F61903942C003792AC /* MCSClient.m in Sources */ = {isa = PBXBuildFile; fileRef = D846F4F51903942C003792AC /* MCSClient.m */; };
 		D846F4F919039613003792AC /* MCSServer.m in Sources */ = {isa = PBXBuildFile; fileRef = D846F4F819039613003792AC /* MCSServer.m */; };
@@ -52,6 +53,8 @@
 		B9F4AD5902C94ED3B42F1366 /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D830F9DB193981420050D1CC /* MCSThriftController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSThriftController.h; sourceTree = "<group>"; };
 		D830F9DC193981420050D1CC /* MCSThriftController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSThriftController.m; sourceTree = "<group>"; };
+		D830F9DE193AACFB0050D1CC /* MCSThriftPeerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSThriftPeerController.h; sourceTree = "<group>"; };
+		D830F9DF193AACFB0050D1CC /* MCSThriftPeerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSThriftPeerController.m; sourceTree = "<group>"; };
 		D846F4F1190391AF003792AC /* MCSPeer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSPeer.h; sourceTree = "<group>"; };
 		D846F4F2190391AF003792AC /* MCSPeer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MCSPeer.m; sourceTree = "<group>"; };
 		D846F4F41903942C003792AC /* MCSClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MCSClient.h; sourceTree = "<group>"; };
@@ -220,6 +223,8 @@
 				D846F4F819039613003792AC /* MCSServer.m */,
 				D830F9DB193981420050D1CC /* MCSThriftController.h */,
 				D830F9DC193981420050D1CC /* MCSThriftController.m */,
+				D830F9DE193AACFB0050D1CC /* MCSThriftPeerController.h */,
+				D830F9DF193AACFB0050D1CC /* MCSThriftPeerController.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -413,6 +418,7 @@
 				D868020118FE32C90035CE60 /* AppDelegate.m in Sources */,
 				D868023518FE34540035CE60 /* NearbyServersDataSource.m in Sources */,
 				D830F9DD193981420050D1CC /* MCSThriftController.m in Sources */,
+				D830F9E0193AACFB0050D1CC /* MCSThriftPeerController.m in Sources */,
 				D868023018FE344A0035CE60 /* ServerBrowserViewController.m in Sources */,
 				D8B3DA001918AD3300368238 /* ChatViewController.m in Sources */,
 				D868022F18FE344A0035CE60 /* MCSNearbyServer.m in Sources */,

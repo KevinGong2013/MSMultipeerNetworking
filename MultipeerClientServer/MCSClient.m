@@ -59,6 +59,28 @@
 	[self.browser invitePeer:hostPeerID toSession:self.session withContext:nil timeout:20.f];
 }
 
+- (void)sendThriftOperation:(void(^)(id thriftService))thriftOperation
+{
+	__weak MCSPeer *weakSelf = self;
+	NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
+		[weakSelf.thriftController dequeueThriftService:^(id thriftService) {
+			@try {
+				thriftOperation(thriftService);
+			}
+			@catch (NSException * e) {
+				NSLog(@"Error, exception: %@", e);
+			}
+			
+			if (thriftService) {
+				[self.thriftController enqueueThriftService:thriftService forPeer:self.hostPeerID];
+			}
+		}
+		forPeer:self.hostPeerID];
+	}];
+		
+	[self.operationQueue addOperation:operation];
+}
+
 #pragma mark MCSessionDelegate
 
 - (void)session:(MCSession *)session peer:(MCPeerID *)peerID didChangeState:(MCSessionState)state

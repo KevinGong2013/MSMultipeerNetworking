@@ -23,7 +23,7 @@
 - (void)receiveStream:(NSInputStream *)stream withName:(NSString *)streamName fromPeer:(MCPeerID *)peerID;
 - (void)removeConnectionsForPeer:(MCPeerID *)peerID;
 
-- (void)enqueueThriftService:(id)thriftService;
-- (void)dequeueThriftService:(void (^)(id thriftService))completion;
+- (void)enqueueThriftService:(id)thriftService forPeer:(MCPeerID *)peerID;
+- (void)dequeueThriftService:(void (^)(id thriftService))completion forPeer:(MCPeerID *)peerID;
 
 @end
