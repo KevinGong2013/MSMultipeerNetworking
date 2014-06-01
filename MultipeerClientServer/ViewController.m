@@ -19,7 +19,6 @@ static void *ConnectedContext = &ConnectedContext;
 
 @property (nonatomic, strong) ChatAppClient *client;
 @property (nonatomic, strong) ChatAppServer *server;
-@property (nonatomic, strong) Chat *chat;
 
 - (IBAction)startClient:(id)sender;
 - (IBAction)startServer:(id)sender;
@@ -27,13 +26,6 @@ static void *ConnectedContext = &ConnectedContext;
 @end
 
 @implementation ViewController
-
-- (void)viewDidLoad
-{
-	[super viewDidLoad];
-	
-	self.chat = [[Chat alloc] initWithRevision:0 messages:[NSMutableArray array]];
-}
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
@@ -61,21 +53,18 @@ static void *ConnectedContext = &ConnectedContext;
 		ChatViewController *viewController = segue.destinationViewController;
 		viewController.chatAppAPI = self.server ? self.server : self.client;
 		viewController.peer = self.server ? self.server : self.client;
-		viewController.chat = self.chat;
 	}
 }
 
 - (IBAction)startClient:(id)sender
 {
-	self.chat = [[Chat alloc] initWithRevision:0 messages:[NSMutableArray array]];
 	self.client = [[ChatAppClient alloc] init];
 	[self performSegueWithIdentifier:@"startClientSegue" sender:sender];
 }
 
 - (IBAction)startServer:(id)sender
 {
-	self.chat = [[Chat alloc] initWithRevision:0 messages:[NSMutableArray array]];
-	self.server = [[ChatAppServer alloc] initWithServiceType:@"ms-multichat" chat:self.chat];
+	self.server = [[ChatAppServer alloc] initWithServiceType:@"ms-multichat"];
 	[self performSegueWithIdentifier:@"startServerSegue" sender:sender];
 }
 

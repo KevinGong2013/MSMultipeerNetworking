@@ -37,8 +37,26 @@
 
 - (void)sendThriftEvent:(void(^)(id thriftService))thriftOperation
 {
-	if (self.connectedPeers.count) {
-		[self sendThriftOperation:thriftOperation];
+	for( MCPeerID *peerID in self.connectedPeers) {
+		__weak MCSPeer *weakSelf = self;
+		NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
+			[weakSelf.thriftController dequeueThriftService:^(id thriftService) {
+				@try {
+					thriftOperation(thriftService);
+				}
+				@catch (NSException * e) {
+					NSLog(@"Error, exception: %@", e);
+				}
+				
+				if (thriftService) {
+					[self.thriftController enqueueThriftService:thriftService forPeer:peerID];
+				}
+			}
+			forPeer:peerID];
+		}];
+		
+		[self.operationQueue addOperation:operation];
+
 	}
 }
 

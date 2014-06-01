@@ -111,6 +111,7 @@ static dispatch_queue_t dispatch_thrift_queue() {
 						NSLog(@"Error: Could not create thrift service for class %@", NSStringFromClass(self.outgoingThriftServiceClass));
 					}
 					else {
+						NSLog(@"%@ adding thrift service %@", [UIDevice currentDevice].name, NSStringFromClass([thriftService class]));
 						[self addThriftService:thriftService forPeer:peerID];
 					}
 				}

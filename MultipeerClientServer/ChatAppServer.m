@@ -17,11 +17,11 @@
 
 @implementation ChatAppServer
 
-- (id)initWithServiceType:(NSString *)serviceType chat:(Chat *)chat
+- (id)initWithServiceType:(NSString *)serviceType
 {
 	self = [super initWithServiceType:serviceType maxConcurrentRequests:3];
 	if (self) {
-		self.chat = chat;
+		self.chat = [[Chat alloc] initWithRevision:0 messages:[NSMutableArray array]];
 
 		__weak ChatAppServer *weakSelf = self;
 		self.outgoingThriftServiceClass = [ChatAppServerEventsClient class];

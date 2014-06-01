@@ -23,14 +23,14 @@ static void *ChatRevisionContext = &ChatRevisionContext;
 
 - (void)dealloc
 {
-	[self.chat removeObserver:self forKeyPath:@"revision"];
+	[self.chatAppAPI.chat removeObserver:self forKeyPath:@"revision"];
 }
 
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
 
-	[self.chat addObserver:self forKeyPath:@"revision" options:NSKeyValueObservingOptionNew context:ChatRevisionContext];
+	[self.chatAppAPI.chat addObserver:self forKeyPath:@"revision" options:NSKeyValueObservingOptionNew context:ChatRevisionContext];
 }
 
 - (void)viewWillLayoutSubviews
@@ -122,12 +122,12 @@ static void *ChatRevisionContext = &ChatRevisionContext;
 
 - (NSUInteger)messageCount
 {
-	return self.chat.messages.count;
+	return self.chatAppAPI.chat.messages.count;
 }
 
 - (CGSize)sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-	Message *message = self.chat.messages[ indexPath.row ];
+	Message *message = self.chatAppAPI.chat.messages[ indexPath.row ];
 	BOOL isAuthor = [message.authorId isEqualToString:self.peer.uuid];
 	MSMessageBubbleViewModel *viewModel = [self messageBubbleViewModelForMessageText:message.text isAuthor:isAuthor];
 	return [viewModel.layoutSpec cellSize];
@@ -135,7 +135,7 @@ static void *ChatRevisionContext = &ChatRevisionContext;
 
 - (MSMessageBubbleViewModel *)messageBubbleViewModelAtIndexPath:(NSIndexPath *)indexPath
 {
-	Message *message = self.chat.messages[ indexPath.row ];
+	Message *message = self.chatAppAPI.chat.messages[ indexPath.row ];
 	BOOL isAuthor = [message.authorId isEqualToString:self.peer.uuid];
 	return [self messageBubbleViewModelForMessageText:message.text isAuthor:isAuthor];
 }

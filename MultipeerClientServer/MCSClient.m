@@ -23,9 +23,7 @@
 - (id)initWithServiceType:(NSString *)serviceType maxConcurrentRequests:(NSUInteger)maxConcurrentRequests
 {
 	self = [super initWithServiceType:serviceType maxConcurrentRequests:maxConcurrentRequests];
-	if (self) {
-		self.thriftController.maxConnections = maxConcurrentRequests;
-		
+	if (self) {		
 		self.nearbyServers = [NSMutableArray array];
 		self.browser = [[MCNearbyServiceBrowser alloc] initWithPeer:self.session.myPeerID serviceType:self.serviceType];
 		self.browser.delegate = self;

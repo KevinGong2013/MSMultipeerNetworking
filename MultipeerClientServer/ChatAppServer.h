@@ -11,6 +11,6 @@
 
 @interface ChatAppServer : MCSServer <ChatAppAsyncAPI>
 
-- (id)initWithServiceType:(NSString *)serviceType chat:(Chat *)chat;
+- (id)initWithServiceType:(NSString *)serviceType;
 
 @end

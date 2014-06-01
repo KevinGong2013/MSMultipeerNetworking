@@ -10,6 +10,8 @@
 
 @protocol ChatAppAsyncAPI <NSObject>
 
+@property (nonatomic, strong, readonly) Chat *chat;
+
 - (void)addMessage:(Message *)message withCompletion:(void(^)(int32_t revision))completion;
 - (void)getChatRevisionWithCompletion:(void(^)(int32_t revision))completion;
 - (void)getChatWithCompletion:(void(^)(Chat *chat))completion;

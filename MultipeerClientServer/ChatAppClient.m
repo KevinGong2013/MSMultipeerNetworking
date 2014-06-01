@@ -12,7 +12,8 @@
 
 @interface ChatAppClient () <ChatAppServerEvents>
 
-@property (nonatomic, strong) MCSClient *client;
+@property (nonatomic, strong) Chat *chat;
+
 @end
 
 @implementation ChatAppClient
@@ -21,6 +22,8 @@
 {
 	self = [super initWithServiceType:@"ms-multichat" maxConcurrentRequests:3];
 	if (self) {
+		self.chat = [[Chat alloc] initWithRevision:0 messages:[NSMutableArray array]];
+		
 		__weak ChatAppClient *weakSelf = self;
 		self.outgoingThriftServiceClass = [ChatAppAPIClient class];
 		self.incomingThriftProcessorInstantiationBlock = ^{ return [[ChatAppServerEventsProcessor alloc] initWithChatAppServerEvents:weakSelf]; };
@@ -81,7 +84,14 @@
 
 - (void)chatUpdated:(int32_t)revision
 {
-	NSLog(@"Client: chatUpdated %d", revision);
+	[self getChatWithCompletion:^(Chat *chat) {
+		if (chat) {
+			[self.chat willChangeValueForKey:@"revision"];
+			self.chat.revision = chat.revision;
+			self.chat.messages = chat.messages;
+			[self.chat didChangeValueForKey:@"revision"];
+		}
+	}];
 }
 
 @end

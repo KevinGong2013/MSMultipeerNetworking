@@ -36,6 +36,7 @@
 		self.session = [[MCSession alloc] initWithPeer:self.peerID];
 		self.session.delegate = self;
 		self.thriftController = [[MCSThriftController alloc] initWithPeer:self];
+		self.thriftController.maxConnections = maxConcurrentRequests;
 		self.operationQueue = [[NSOperationQueue alloc] init];
 		self.operationQueue.maxConcurrentOperationCount = maxConcurrentRequests;
 	}
