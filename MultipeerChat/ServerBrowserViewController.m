@@ -7,7 +7,6 @@
 //
 
 #import "ServerBrowserViewController.h"
-#import "SVProgressHUD.h"
 #import "NearbyServersDataSource.h"
 #import "MSNearbyServer.h"
 #import "MSMultipeerClient.h"
