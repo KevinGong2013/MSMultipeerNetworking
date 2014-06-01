@@ -55,7 +55,7 @@
 				NSLog(@"Error, exception: %@", e);
 			}
 
-			if (thriftOperation) {
+			if (thriftService) {
 				[self.thriftController enqueueThriftService:thriftService];
 			}
 		}];

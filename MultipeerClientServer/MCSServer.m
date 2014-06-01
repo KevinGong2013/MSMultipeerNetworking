@@ -35,6 +35,13 @@
 	[self.advertiser stopAdvertisingPeer];
 }
 
+- (void)sendThriftEvent:(void(^)(id thriftService))thriftOperation
+{
+	if (self.connectedPeers.count) {
+		[self sendThriftOperation:thriftOperation];
+	}
+}
+
 - (NSDictionary *)discoveryInfo
 {
 	return @{
@@ -48,8 +55,20 @@
 {
 	[super session:session peer:peerID didChangeState:state];
 	
-	if (state == MCSessionStateNotConnected) {
-		[self.thriftController removeConnectionsForPeer:peerID];
+	switch (state) {
+		case MCSessionStateNotConnected: {
+			[self.thriftController removeConnectionsForPeer:peerID];
+		}
+			break;
+		case MCSessionStateConnecting:
+			break;
+		case MCSessionStateConnected: {
+			[self.thriftController startBidirectionalConnectionsToPeer:peerID];
+		}
+			break;
+			
+		default:
+			break;
 	}
 }
 

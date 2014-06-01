@@ -14,10 +14,6 @@ static void *ChatRevisionContext = &ChatRevisionContext;
 @interface ChatViewController () <MSMessageViewControllerDelegate>
 
 @property (nonatomic, strong) MSMessageViewController *messageViewController;
-@property (nonatomic, strong) NSTimer *chatPollingTimer;
-
-- (void)scheduleChatPolling;
-- (void)pollChat:(id)sender;
 
 - (MSMessageBubbleViewModel *)messageBubbleViewModelForMessageText:(NSString *)messageText isAuthor:(BOOL)isAuthor;
 
@@ -43,13 +39,6 @@ static void *ChatRevisionContext = &ChatRevisionContext;
 	[super viewWillLayoutSubviews];
 }
 
-- (void)viewDidAppear:(BOOL)animated
-{
-	[super viewDidAppear:animated];
-	
-	[self scheduleChatPolling];
-}
-
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
 	if ([segue.identifier isEqualToString:@"embedMessageViewSegue"]) {
@@ -71,34 +60,6 @@ static void *ChatRevisionContext = &ChatRevisionContext;
 	else {
 		return [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
 	}
-}
-
-- (void)scheduleChatPolling
-{
-	dispatch_async(dispatch_get_main_queue(), ^{
-		self.chatPollingTimer = [NSTimer scheduledTimerWithTimeInterval:0.5f target:self selector:@selector(pollChat:) userInfo:nil repeats:NO];
-	});
-}
-
-- (void)pollChat:(id)sender
-{
-	[self.chatAppAPI getChatRevisionWithCompletion:^(int32_t revision) {
-		if (self.chat.revision < revision) {
-			[self.chatAppAPI getChatWithCompletion:^(Chat *chat) {
-				if (chat) {
-					dispatch_async(dispatch_get_main_queue(), ^{
-						self.chat.revision = chat.revision;
-						self.chat.messages = chat.messages;
-					});
-				}
-				
-				[self scheduleChatPolling];
-			}];
-		}
-		else {
-			[self scheduleChatPolling];
-		}
-	}];
 }
 
 - (MSMessageBubbleViewModel *)messageBubbleViewModelForMessageText:(NSString *)messageText isAuthor:(BOOL)isAuthor

@@ -63,6 +63,12 @@
 {
 	[self.chat.messages addObject:message];
 	self.chat.revision = self.chat.revision + 1;
+	
+	[self sendThriftEvent:^(id thriftService) {
+		ChatAppServerEventsClient *client = thriftService;
+		[client chatUpdated:self.chat.revision];
+	}];
+	
 	return self.chat.revision;
 }
 

@@ -21,7 +21,6 @@
 {
 	self = [super initWithServiceType:@"ms-multichat" maxConcurrentRequests:3];
 	if (self) {
-		
 		__weak ChatAppClient *weakSelf = self;
 		self.outgoingThriftServiceClass = [ChatAppAPIClient class];
 		self.incomingThriftProcessorInstantiationBlock = ^{ return [[ChatAppServerEventsProcessor alloc] initWithChatAppServerEvents:weakSelf]; };
@@ -82,7 +81,7 @@
 
 - (void)chatUpdated:(int32_t)revision
 {
-	
+	NSLog(@"Client: chatUpdated %d", revision);
 }
 
 @end

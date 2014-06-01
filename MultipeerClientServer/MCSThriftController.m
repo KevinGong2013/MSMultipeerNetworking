@@ -55,14 +55,14 @@
 - (void)addProcessorFromStream:(NSInputStream *)stream withName:(NSString *)streamName fromPeerID:(MCPeerID *)peerID;
 @end
 
-static dispatch_queue_t processor_queue() {
-	static dispatch_queue_t processor_queue;
+static dispatch_queue_t dispatch_thrift_queue() {
+	static dispatch_queue_t dispatch_thrift_queue;
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
-		processor_queue = dispatch_queue_create("com.multipeerclientserver.mcspeer.processor", DISPATCH_QUEUE_CONCURRENT);
+		dispatch_thrift_queue = dispatch_queue_create("com.multipeerclientserver.thrift", DISPATCH_QUEUE_CONCURRENT);
 	});
 	
-	return processor_queue;
+	return dispatch_thrift_queue;
 }
 
 @implementation MCSThriftController
@@ -86,6 +86,8 @@ static dispatch_queue_t processor_queue() {
 	if (!self.outgoingThriftServiceClass) {
 		NSLog(@"Error: thriftServiceClass is nil.");
 	}
+	
+	
 
 	for (NSUInteger i = 0; i < self.maxConnections; ++i) {
 		NSString *streamName = [NSString stringWithFormat:@"out-%@", [[NSUUID UUID] UUIDString]];
@@ -157,7 +159,7 @@ static dispatch_queue_t processor_queue() {
 			if (thriftProcessor) {
 				[self addProcessor:thriftProcessor forPeer:peerID];
 				
-				dispatch_async(processor_queue(), ^{
+				dispatch_async(dispatch_thrift_queue(), ^{
 					@try {
 						BOOL result = NO;
 						do {
@@ -182,7 +184,7 @@ static dispatch_queue_t processor_queue() {
 
 - (void)enqueueThriftService:(id)thriftService
 {
-	dispatch_async(dispatch_get_main_queue(), ^{
+	dispatch_async(dispatch_thrift_queue(), ^{
 		[self.thriftServices addObject:thriftService];
 	});
 }
@@ -192,7 +194,7 @@ static dispatch_queue_t processor_queue() {
 	static const float timeout = 10.f;
 	
 	if (completion) {
-		dispatch_async(dispatch_get_main_queue(), ^{
+		dispatch_async(dispatch_thrift_queue(), ^{
 			CFAbsoluteTime maxTryTime = CFAbsoluteTimeGetCurrent() + timeout;
 
 			id thriftService = self.thriftServices.anyObject;

@@ -10,4 +10,6 @@
 
 @interface MCSServer : MCSPeer
 
+- (void)sendThriftEvent:(void(^)(id thriftService))thriftOperation;
+
 @end

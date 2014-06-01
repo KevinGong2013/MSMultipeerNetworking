@@ -74,10 +74,7 @@
 			});
 		}
 			break;
-		case MCSessionStateConnecting: {
-			dispatch_async(dispatch_get_main_queue(), ^{
-			});
-		}
+		case MCSessionStateConnecting:
 			break;
 		case MCSessionStateConnected: {
 			dispatch_async(dispatch_get_main_queue(), ^{
