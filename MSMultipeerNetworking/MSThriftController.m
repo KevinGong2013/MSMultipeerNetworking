@@ -46,7 +46,7 @@
 
 @interface MSThriftController () <NSStreamDelegate>
 
-@property (nonatomic, strong) MSMultipeer *multipeer;
+@property (nonatomic, weak) MSMultipeer *multipeer;
 @property (nonatomic, strong) NSMutableDictionary *streamRequests;
 @property (nonatomic, strong) NSMutableDictionary *peerThriftInfos;
 
